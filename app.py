@@ -213,7 +213,7 @@ def stop_following(follow_id):
 
 @app.route('/users/add_like/<int:like_id>', methods=['POST'])
 def add_like(like_id):
-    """add a like for the currently logged in user"""
+    """adds a like for the currently logged in user"""
 
     if not g.user:
         flash("Access unauthorized.", "danger")
@@ -223,24 +223,22 @@ def add_like(like_id):
     g.user.likes.append(liked_warble)
     db.session.commit()
 
-    return redirect(f"/users/{g.user.id}/likes")
-
+    return redirect('/')
 
 
 @app.route('/users/remove_like/<int:like_id>', methods=['POST'])
 def remove_like(like_id):
-    """Have currently-logged-in-user remove this like"""
+    """removes a like for currently logged in user"""
 
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    liked_warble = Message.query.get(like_id)
-    g.user.likes.remove(liked_warble)
+    liked_warber = Message.query.get_or_404(like_id)
+    g.user.likes.remove(liked_warber)
     db.session.commit()
 
-    return redirect(f"/users/{g.user.id}/likes")
-
+    return redirect('/')
 
 
 @app.route('/users/<int:user_id>/likes')
@@ -252,15 +250,9 @@ def show_likes(user_id):
         return redirect("/")
     
     user = User.query.get_or_404(user_id)
-    ids = [like.id for like in g.user.likes]
-    messages = (Message
-                .query
-                .filter(Message.user_id.in_(ids))
-                .order_by(Message.timestamp.desc())
-                .limit(100)
-                .all())    
+    likes = user.likes
 
-    return render_template('users/likes.html', user=user, messages=messages)
+    return render_template('users/likes.html', user=user, likes=likes)
 
     
 
@@ -380,7 +372,10 @@ def homepage():
                     .limit(100)
                     .all())
 
-        return render_template('home.html', messages=messages)
+
+        likes = [like.id for like in g.user.likes]
+
+        return render_template('home.html', messages=messages, likes=likes)
 
     else:
         return render_template('home-anon.html')
